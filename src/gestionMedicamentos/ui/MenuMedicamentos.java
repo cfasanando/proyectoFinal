@@ -17,7 +17,7 @@ public class MenuMedicamentos {
     public void mostrarMenu() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.println("\n--- Gestión de Medicamentos ---");
+            System.out.println("\n--- Gestión de Medicamentos hecho por JEAN MAX ---");
             System.out.println("1. Agregar Medicamento");
             System.out.println("2. Eliminar Medicamento por Código");
             System.out.println("3. Verificar Stock por Código");
