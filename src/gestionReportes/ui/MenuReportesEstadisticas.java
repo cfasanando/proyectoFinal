@@ -29,7 +29,7 @@ public class MenuReportesEstadisticas {
         boolean salir = false;
 
         while (!salir) {
-            System.out.println("\n--- Reportes y Estadisticas ---");
+            System.out.println("\n--- Reportes y Estadisticas HECHO POR CHRISTIAN ---");
             System.out.println("1. Reporte de Pacientes");
             System.out.println("2. Reporte de Citas");
             System.out.println("3. Reporte de Medicos");
