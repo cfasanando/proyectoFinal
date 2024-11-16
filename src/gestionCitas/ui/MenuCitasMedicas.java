@@ -24,7 +24,7 @@ public class MenuCitasMedicas {
     public void mostrarMenu() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.println("\n--- Programación de Citas Médicas y Gestión de Médicos ---");
+            System.out.println("\n--- Programación de Citas Médicas y Gestión de Médicos ---HECHO POR MANUEL");
             System.out.println("1. Programar Cita");
             System.out.println("2. Cancelar Cita");
             System.out.println("3. Registrar Diagnóstico y Receta");
