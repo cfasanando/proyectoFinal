@@ -63,7 +63,20 @@ public class CitaService {
     }
 
     public void programarCita(Cita cita) {
+        if (cita.getPacienteAsignado() == null) {
+            throw new RuntimeException("El paciente asignado a la cita no puede ser nulo.");
+        }
+        if (cita.getMedicoAsignado() == null) {
+            throw new RuntimeException("El médico asignado a la cita no puede ser nulo.");
+        }
+
+        if (!cita.getMedicoAsignado().isDisponible()) {
+            throw new RuntimeException("El médico " + cita.getMedicoAsignado().getNombre() + " no está disponible.");
+        }
+
         citas.add(cita);
+        cita.getMedicoAsignado().setDisponible(false);
+
         System.out.println("Cita programada para el paciente " + cita.getPacienteAsignado().getNombre() +
                 " con el médico " + cita.getMedicoAsignado().getNombre() +
                 " el " + cita.getFecha() + " a las " + cita.getHora() + ".");

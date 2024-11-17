@@ -36,8 +36,9 @@ public class Medicamento extends MedicamentoBase {
 
     @Override
     public void verificarStock() {
+        System.out.println("El stock actual del medicamento " + nombre + " es de " + cantidadDisponible + " unidades.");
         if (cantidadDisponible < 10) {
-            System.out.println("Alerta: Stock bajo para el medicamento " + nombre);
+            System.out.println("Alerta: Stock bajo para el medicamento " + nombre + ". Por favor, considere reabastecer.");
         }
     }
 
