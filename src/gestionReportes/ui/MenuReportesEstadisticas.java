@@ -1,27 +1,16 @@
 package gestionReportes.ui;
 
-import gestionCitas.servicios.CitaService;
-import gestionMedicamentos.servicios.MedicamentoService;
-import gestionPacientes.servicios.PacienteService;
-import gestionCitas.modelos.Cita;
-import gestionPacientes.modelos.Paciente;
-import gestionMedicamentos.modelos.Medicamento;
-import gestionCitas.modelos.Medico;
+import gestionReportes.servicios.ReporteService;
 
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 public class MenuReportesEstadisticas {
 
-    private final CitaService citaService;
-    private final PacienteService pacienteService;
-    private final MedicamentoService medicamentoService;
+    private final ReporteService reporteService;
 
-    public MenuReportesEstadisticas(CitaService citaService, PacienteService pacienteService, MedicamentoService medicamentoService) {
-        this.citaService = citaService;
-        this.pacienteService = pacienteService;
-        this.medicamentoService = medicamentoService;
+    public MenuReportesEstadisticas(ReporteService reporteService) {
+        this.reporteService = reporteService;
     }
 
     public void mostrarMenu() {
@@ -30,111 +19,93 @@ public class MenuReportesEstadisticas {
 
         while (!salir) {
             System.out.println("\n--- Reportes y Estadisticas HECHO POR CHRISTIAN ---");
-            System.out.println("1. Reporte de Pacientes");
-            System.out.println("2. Reporte de Citas");
-            System.out.println("3. Reporte de Medicos");
-            System.out.println("4. Reporte de Medicamentos");
-            System.out.println("5. Resumen Estadistico");
+            System.out.println("1. Top 5 Medicamentos Mas Recetados");
+            System.out.println("2. Cantidad de Citas por Medico");
+            System.out.println("3. Pacientes con Más Citas");
+            System.out.println("4. Medicamentos con Stock Bajo");
+            System.out.println("5. Resumen General de Citas");
             System.out.println("6. Regresar al Menu Principal");
 
             System.out.print("Seleccione una opcion: ");
-            int opcion = -1;
-
-            if (scanner.hasNextInt()) {
-                opcion = scanner.nextInt();
-                scanner.nextLine();
-            } else {
-                System.out.println("Entrada no válida. Por favor, ingrese un número entre 1 y 6.");
-                scanner.nextLine();
-                continue;
-            }
+            int opcion = scanner.nextInt();
+            scanner.nextLine();
 
             switch (opcion) {
                 case 1:
-                    generarReportePacientes();
+                    mostrarTopMedicamentosMasRecetados();
                     break;
                 case 2:
-                    generarReporteCitas();
+                    mostrarCitasPorMedico();
                     break;
                 case 3:
-                    generarReporteMedicos();
+                    mostrarPacientesConMasCitas();
                     break;
                 case 4:
-                    generarReporteMedicamentos();
+                    mostrarMedicamentosConStockBajo(scanner);
                     break;
                 case 5:
-                    mostrarResumenEstadistico();
+                    mostrarResumenGeneralCitas();
                     break;
                 case 6:
                     salir = true;
                     System.out.println("Regresando al Menu Principal...");
                     break;
                 default:
-                    System.out.println("Opcion no valida. Intente nuevamente.");
+                    System.out.println("Opcion no válida. Intente nuevamente.");
             }
             System.out.println("\n--------------------------------------------------\n");
         }
     }
 
-    private void generarReportePacientes() {
-        System.out.println("\n--- Reporte de Pacientes ---");
-        Set<Paciente> pacientes = pacienteService.getPacientes();
-        System.out.printf("%-15s %-20s %-10s\n", "ID", "Nombre", "Edad");
-        System.out.println("--------------------------------------------------");
-        for (Paciente paciente : pacientes) {
-            System.out.printf("%-15s %-20s %-10d\n", paciente.getIdPaciente(), paciente.getNombre(), paciente.getEdad());
+    private void mostrarTopMedicamentosMasRecetados() {
+        System.out.println("\n--- Top 5 Medicamentos Mas Recetados ---");
+        List<String[]> medicamentos = reporteService.obtenerTopMedicamentosMasRecetados();
+        System.out.printf("%-20s %-15s\n", "Medicamento", "Total Recetado");
+        System.out.println("---------------------------------------------");
+        for (String[] medicamento : medicamentos) {
+            System.out.printf("%-20s %-15s\n", medicamento[0], medicamento[1]);
         }
     }
 
-    private void generarReporteCitas() {
-        System.out.println("\n--- Reporte de Citas ---");
-        List<Cita> citas = citaService.getCitas();
-        System.out.printf("%-15s %-10s %-20s %-20s\n", "Fecha", "Hora", "Paciente", "Medico");
-        System.out.println("--------------------------------------------------");
-        for (Cita cita : citas) {
-            System.out.printf("%-15s %-10s %-20s %-20s\n", 
-                cita.getFecha(), cita.getHora(), 
-                cita.getPacienteAsignado().getNombre(), 
-                cita.getMedicoAsignado().getNombre());
+    private void mostrarCitasPorMedico() {
+        System.out.println("\n--- Cantidad de Citas por Medico ---");
+        List<String[]> citasPorMedico = reporteService.obtenerCitasPorMedico();
+        System.out.printf("%-20s %-20s\n", "Medico", "Cantidad de Citas");
+        System.out.println("---------------------------------------------");
+        for (String[] medico : citasPorMedico) {
+            System.out.printf("%-20s %-20s\n", medico[0], medico[1]);
         }
     }
 
-    private void generarReporteMedicos() {
-        System.out.println("\n--- Reporte de Medicos ---");
-        List<Medico> medicos = citaService.getMedicos();
-        System.out.printf("%-15s %-20s %-20s %-15s\n", "ID", "Nombre", "Especialidad", "Disponibilidad");
-        System.out.println("--------------------------------------------------");
-        for (Medico medico : medicos) {
-            System.out.printf("%-15s %-20s %-20s %-15s\n", 
-                medico.getIdMedico(), medico.getNombre(), 
-                medico.getEspecialidad(), medico.isDisponible() ? "Disponible" : "Ocupado");
+    private void mostrarPacientesConMasCitas() {
+        System.out.println("\n--- Pacientes con Mas Citas ---");
+        List<String[]> pacientes = reporteService.obtenerPacientesConMasCitas();
+        System.out.printf("%-20s %-15s\n", "Paciente", "Total de Citas");
+        System.out.println("---------------------------------------------");
+        for (String[] paciente : pacientes) {
+            System.out.printf("%-20s %-15s\n", paciente[0], paciente[1]);
         }
     }
 
-    private void generarReporteMedicamentos() {
-        System.out.println("\n--- Reporte de Medicamentos ---");
-        Set<Medicamento> medicamentos = medicamentoService.getMedicamentos();
-        System.out.printf("%-15s %-20s %-10s %-15s\n", "Codigo", "Nombre", "Cantidad", "Fecha Vencimiento");
-        System.out.println("--------------------------------------------------");
-        for (Medicamento medicamento : medicamentos) {
-            System.out.printf("%-15s %-20s %-10d %-15s\n", 
-                medicamento.getCodigo(), medicamento.getNombre(), 
-                medicamento.getCantidadDisponible(), medicamento.getFechaVencimiento());
+    private void mostrarMedicamentosConStockBajo(Scanner scanner) {
+        System.out.print("Ingrese el limite de stock para considerar como bajo: ");
+        int limiteStock = scanner.nextInt();
+        scanner.nextLine(); // Limpiar buffer
+
+        System.out.println("\n--- Medicamentos con Stock Bajo ---");
+        List<String[]> medicamentos = reporteService.obtenerMedicamentosConStockBajo(limiteStock);
+        System.out.printf("%-20s %-15s\n", "Medicamento", "Stock Disponible");
+        System.out.println("---------------------------------------------");
+        for (String[] medicamento : medicamentos) {
+            System.out.printf("%-20s %-15s\n", medicamento[0], medicamento[1]);
         }
     }
 
-    private void mostrarResumenEstadistico() {
-        System.out.println("\n--- Resumen Estadistico ---");
-        int totalPacientes = pacienteService.getPacientes().size();
-        int totalCitas = citaService.getCitas().size();
-        int totalMedicos = citaService.getMedicos().size();
-        int totalMedicamentos = medicamentoService.getMedicamentos().size();
-        int citasPorPaciente = totalCitas / Math.max(totalPacientes, 1);
-
-        System.out.println("Total de Pacientes: " + totalPacientes);
-        System.out.println("Total de Citas: " + totalCitas);
-        System.out.println("Total de Medicos: " + totalMedicos);
-        System.out.println("Total de Medicamentos: " + totalMedicamentos);
-        System.out.println("Promedio de Citas por Paciente: " + citasPorPaciente);
+    private void mostrarResumenGeneralCitas() {
+        System.out.println("\n--- Resumen General de Citas ---");
+        String[] resumen = reporteService.obtenerResumenGeneralCitas();
+        System.out.printf("%-30s %s\n", "Total de Citas:", resumen[0]);
+        System.out.printf("%-30s %s\n", "Total de Diagnosticos Registrados:", resumen[1]);
+        System.out.printf("%-30s %s\n", "Total de Recetas Emitidas:", resumen[2]);
     }
 }

@@ -6,7 +6,10 @@ import gestionMedicamentos.ui.MenuMedicamentos;
 import gestionPacientes.ui.MenuPacientes;
 import gestionCitas.ui.MenuCitasMedicas;
 import gestionPacientes.servicios.PacienteService;
+import gestionReportes.servicios.ReporteService;
 import gestionReportes.ui.MenuReportesEstadisticas;
+import conexion.ConexionDB;
+import gestionCitas.servicios.MedicoService;
 
 import java.util.Scanner;
 
@@ -15,6 +18,9 @@ public class SaludVital {
     public static void main(String[] args) {
         mostrarLogo();
         mostrarMenuPrincipal();
+
+        // Cerrar la conexión al salir del sistema
+        ConexionDB.closeConnection();
     }
 
     private static void mostrarLogo() {
@@ -49,7 +55,7 @@ public class SaludVital {
                 opcion = scanner.nextInt();
                 scanner.nextLine();
             } else {
-                System.out.println("Entrada no válida. Por favor, ingrese un número entre 1 y 5.");
+                System.out.println("Entrada no valida. Por favor, ingrese un numero entre 1 y 5.");
                 scanner.nextLine();
                 continue;
             }
@@ -80,31 +86,29 @@ public class SaludVital {
     }
 
     private static void iniciarModuloMedicamentos() {
-        MedicamentoService medicamentoService = MedicamentoService.getInstance();
-        MenuMedicamentos menu = new MenuMedicamentos(medicamentoService);
-        menu.mostrarMenu();
+        MedicamentoService medicamentoService = new MedicamentoService();
+        MenuMedicamentos menuMedicamentos = new MenuMedicamentos(medicamentoService);
+        menuMedicamentos.mostrarMenu();
     }
 
-    private static void iniciarModuloPacientes() {
-        PacienteService pacienteService = PacienteService.getInstance();
-        MenuPacientes menu = new MenuPacientes(pacienteService);
-        menu.mostrarMenu();
+    private static void iniciarModuloPacientes() {        
+        PacienteService pacienteService = new PacienteService();        
+        MenuPacientes menuPacientes = new MenuPacientes(pacienteService);      
+        menuPacientes.mostrarMenu();
     }
 
     private static void iniciarModuloCitasMedicas() {
-        MedicamentoService medicamentoService = MedicamentoService.getInstance();       
-        CitaService citaService = CitaService.getInstance(medicamentoService);
-        PacienteService pacienteService = PacienteService.getInstance();              
-        MenuCitasMedicas menu = new MenuCitasMedicas(citaService, pacienteService, medicamentoService);
+        MedicoService medicoService = new MedicoService();
+        PacienteService pacienteService = new PacienteService();
+        MedicamentoService medicamentoService = new MedicamentoService();
+        CitaService citaService = new CitaService(medicoService, pacienteService, medicamentoService);
+        MenuCitasMedicas menu = new MenuCitasMedicas(citaService, medicoService, pacienteService, medicamentoService);
         menu.mostrarMenu();
     }
 
     private static void iniciarModuloReportesEstadisticas() {
-        MedicamentoService medicamentoService = MedicamentoService.getInstance();       
-        CitaService citaService = CitaService.getInstance(medicamentoService);
-        PacienteService pacienteService = PacienteService.getInstance();    
-        MenuReportesEstadisticas menu = new MenuReportesEstadisticas(citaService, pacienteService, medicamentoService);
-        menu.mostrarMenu();
+        ReporteService reporteService = new ReporteService();        
+        MenuReportesEstadisticas menuReportesEstadisticas = new MenuReportesEstadisticas(reporteService);      
+        menuReportesEstadisticas.mostrarMenu();
     }
-
 }

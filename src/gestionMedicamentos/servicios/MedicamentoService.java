@@ -1,79 +1,88 @@
 package gestionMedicamentos.servicios;
 
+import gestionMedicamentos.dao.MedicamentoDAO;
 import gestionMedicamentos.modelos.Medicamento;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public class MedicamentoService {
+    private MedicamentoDAO medicamentoDAO = new MedicamentoDAO();
 
-    private Set<Medicamento> medicamentos;
-    private static MedicamentoService instancia;
+    public void agregarMedicamento(Medicamento medicamento) {
+        medicamentoDAO.insertarMedicamento(medicamento);
+    }
 
-    public MedicamentoService() {
-        this.medicamentos = new HashSet<>();
+    public List<Medicamento> listarMedicamentos() {
+        return medicamentoDAO.obtenerMedicamentos();
+    }
+
+    public void actualizarMedicamento(Medicamento medicamento) {
+        medicamentoDAO.actualizarMedicamento(medicamento);
+    }
+
+    public void eliminarMedicamento(String codigo) {
+        medicamentoDAO.eliminarMedicamento(codigo);
+    }
+
+    public void verificarStock(String codigo) {
+        int stock = medicamentoDAO.obtenerStock(codigo);
+
+        if (stock == -1) {
+            System.out.println("El codigo de medicamento no existe.");
+            return;
+        }
+
+        if (stock > 20) {
+            System.out.println("Conforme: Stock suficiente. " + stock + " unidades disponibles.");
+        } else if (stock >= 10) {
+            System.out.println("Advertencia: Stock moderado. " + stock + " unidades. Considere reabastecer pronto.");
+        } else if (stock >= 2) {
+            System.out.println("Atencion: Stock bajo. " + stock + " unidades. Es necesario reabastecer.");
+        } else if (stock == 1) {
+            System.out.println("Critico: Solo queda 1 unidad.");
+        } else {
+            System.out.println("Sin stock: El medicamento esta agotado.");
+        }
+    }
+
+    public void verificarFechaVencimiento(String codigo) {
+        String fechaVencimientoStr = medicamentoDAO.obtenerFechaVencimiento(codigo);
+
+        if (fechaVencimientoStr == null) {
+            System.out.println("El codigo de medicamento no existe.");
+            return;
+        }
+
+        LocalDate fechaVencimiento = LocalDate.parse(fechaVencimientoStr);
+        LocalDate hoy = LocalDate.now();
+        long diasRestantes = ChronoUnit.DAYS.between(hoy, fechaVencimiento);
+
+        if (diasRestantes > 60) {
+            System.out.println("Conforme: El medicamento vence en " + diasRestantes + " dias.");
+        } else if (diasRestantes >= 30) {
+            System.out.println("Advertencia: El medicamento vence en " + diasRestantes + " dias. Considere usarlo pronto.");
+        } else if (diasRestantes >= 0) {
+            System.out.println("Atencion: El medicamento vence en " + diasRestantes + " dias.");
+        } else {
+            System.out.println("Vencido: El medicamento esta vencido desde hace " + Math.abs(diasRestantes) + " dias.");
+        }
     }
     
-    public static MedicamentoService getInstance() {
-        if (instancia == null) {
-            instancia = new MedicamentoService();
-        }
-        return instancia;
+    // Método para actualizar el stock del medicamento
+    public boolean actualizarStock(String codigoMedicamento, int nuevaCantidad) {
+        return medicamentoDAO.actualizarStock(codigoMedicamento, nuevaCantidad);
     }
     
-    public boolean reducirStock(String codigo, int cantidad) {
-        Medicamento medicamento = buscarPorCodigo(codigo);
-        if (medicamento != null && medicamento.getCantidadDisponible() >= cantidad) {
-            medicamento.setCantidadDisponible(medicamento.getCantidadDisponible() - cantidad);
-            return true;
-        }
-        return false;
+    public boolean existeMedicamento(String codigoMedicamento) {
+        return medicamentoDAO.buscarMedicamentoPorCodigo(codigoMedicamento) != null;
     }
 
-    public boolean agregarMedicamento(Medicamento medicamento) {
-        boolean agregado = medicamentos.add(medicamento);
-        if (agregado) {
-            System.out.println("Medicamento " + medicamento.getNombre() + " agregado al inventario con código " + medicamento.getCodigo());
-        } else {
-            System.out.println("El medicamento " + medicamento.getNombre() + " ya existe en el inventario.");
-        }
-        return agregado;
+    public int obtenerStock(String codigoMedicamento) {
+        return medicamentoDAO.obtenerStock(codigoMedicamento);
     }
 
-    public boolean eliminarMedicamentoPorCodigo(String codigo) {
-        Medicamento medicamento = buscarPorCodigo(codigo);
-        if (medicamento != null) {
-            medicamentos.remove(medicamento);
-            System.out.println("Medicamento con código " + codigo + " eliminado del inventario.");
-            return true;
-        } else {
-            System.out.println("El medicamento con código " + codigo + " no se encuentra en el inventario.");
-            return false;
-        }
-    }
-
-    public Medicamento buscarPorCodigo(String codigo) {
-        return medicamentos.stream()
-                .filter(m -> m.getCodigo().equalsIgnoreCase(codigo))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public Set<Medicamento> buscarPorCodigoParcial(String prefijo) {
-        return medicamentos.stream()
-                .filter(m -> m.getCodigo().toLowerCase().startsWith(prefijo.toLowerCase()))
-                .collect(Collectors.toSet());
-    }
-
-    public void listarMedicamentos() {
-        System.out.println("\n--- Lista de Medicamentos ---");
-        for (Medicamento medicamento : medicamentos) {
-            System.out.println("Código: " + medicamento.getCodigo() + " - Nombre: " + medicamento.getNombre() +
-                    " - Cantidad: " + medicamento.getCantidadDisponible() + " - Vencimiento: " + medicamento.getFechaVencimiento());
-        }
-    }
-
-    public Set<Medicamento> getMedicamentos() {
-        return medicamentos;
+    public List<Medicamento> buscarMedicamentos(String criterio) {
+        return medicamentoDAO.buscarMedicamentos(criterio);
     }
 }

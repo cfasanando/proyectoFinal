@@ -1,127 +1,130 @@
 package gestionCitas.servicios;
 
+import gestionCitas.dao.CitaDAO;
 import gestionCitas.modelos.Cita;
-import gestionCitas.modelos.Medico;
 import gestionMedicamentos.servicios.MedicamentoService;
-import gestionMedicamentos.modelos.Medicamento;
-import java.util.ArrayList;
+import gestionPacientes.servicios.PacienteService;
 import java.util.List;
-import java.util.Optional;
 
 public class CitaService {
-    private List<Cita> citas;
-    private List<Medico> medicos;
-    private MedicamentoService medicamentoService;
-    private static CitaService instancia;
-   
-    private CitaService(MedicamentoService medicamentoService) {
-        this.citas = new ArrayList<>();
-        this.medicos = new ArrayList<>();
+    private final CitaDAO citaDAO;
+    private final MedicamentoService medicamentoService;
+
+    // Constructor con MedicoService, PacienteService y MedicamentoService
+    public CitaService(MedicoService medicoService, PacienteService pacienteService, MedicamentoService medicamentoService) {
+        this.citaDAO = new CitaDAO(medicoService, pacienteService);
         this.medicamentoService = medicamentoService;
     }
 
-    public static CitaService getInstance(MedicamentoService medicamentoService) {
-        if (instancia == null) {
-            instancia = new CitaService(medicamentoService);
-        }
-        return instancia;
-    }
-    
-    public void registrarReceta(Cita cita, List<Medicamento> medicamentos, List<Integer> cantidades) {
-        for (int i = 0; i < medicamentos.size(); i++) {
-            Medicamento medicamento = medicamentos.get(i);
-            int cantidad = cantidades.get(i);
-            if (medicamentoService.reducirStock(medicamento.getCodigo(), cantidad)) {
-                cita.registrarReceta("Medicamento: " + medicamento.getNombre() + ", Cantidad: " + cantidad);
-                System.out.println("Medicamento " + medicamento.getNombre() + " registrado en la receta.");
-            } else {
-                System.out.println("No hay suficiente stock de " + medicamento.getNombre() + ".");
-            }
-        }
+    public List<Cita> obtenerCitas() {
+        return citaDAO.obtenerCitas();
     }
 
-    public void registrarMedico(Medico medico) {
-        medicos.add(medico);
-        System.out.println("Médico " + medico.getNombre() + " registrado con éxito.");
-    }
-
-    public Optional<Medico> buscarMedicoPorId(String idMedico) {
-        return medicos.stream()
-                .filter(medico -> medico.getIdMedico().equals(idMedico))
-                .findFirst();
-    }
-
-    public void listarMedicos() {
-        System.out.println("\n--- Lista de Médicos ---");
-        medicos.forEach(medico -> System.out.println("ID: " + medico.getIdMedico() +
-                " - Nombre: " + medico.getNombre() + " - Especialidad: " + medico.getEspecialidad() +
-                " - Disponible: " + medico.isDisponible()));
-    }
-
-    public void actualizarDisponibilidad(String idMedico, boolean disponible) {
-        buscarMedicoPorId(idMedico).ifPresent(medico -> medico.setDisponible(disponible));
+    public Cita buscarCitaPorCodigo(String codigoCita) {
+        return citaDAO.buscarCitaPorCodigo(codigoCita);
     }
 
     public void programarCita(Cita cita) {
-        if (cita.getPacienteAsignado() == null) {
-            throw new RuntimeException("El paciente asignado a la cita no puede ser nulo.");
-        }
-        if (cita.getMedicoAsignado() == null) {
-            throw new RuntimeException("El médico asignado a la cita no puede ser nulo.");
-        }
-
-        if (!cita.getMedicoAsignado().isDisponible()) {
-            throw new RuntimeException("El médico " + cita.getMedicoAsignado().getNombre() + " no está disponible.");
-        }
-
-        citas.add(cita);
-        cita.getMedicoAsignado().setDisponible(false);
-
-        System.out.println("Cita programada para el paciente " + cita.getPacienteAsignado().getNombre() +
-                " con el médico " + cita.getMedicoAsignado().getNombre() +
-                " el " + cita.getFecha() + " a las " + cita.getHora() + ".");
-    }
-
-    public boolean cancelarCita(String fecha, String hora) {
-        Optional<Cita> citaOpt = citas.stream()
-                .filter(c -> c.getFecha().equals(fecha) && c.getHora().equals(hora))
-                .findFirst();
-
-        if (citaOpt.isPresent()) {
-            Cita cita = citaOpt.get();
-            Medico medico = cita.getMedicoAsignado();
-
-            citas.remove(cita);
-           
-            medico.setDisponible(true);
-
-            System.out.println("Cita cancelada con éxito.");
-            return true;
+        boolean exito = citaDAO.insertarCita(cita);
+        if (exito) {
+            System.out.println("Cita programada correctamente.");
         } else {
-            System.out.println("Cita no encontrada.");
-            return false;
+            System.out.println("Error al programar la cita.");
         }
     }
 
-    public Cita buscarCita(String fecha, String hora) {
-        return citas.stream()
-                .filter(c -> c.getFecha().equals(fecha) && c.getHora().equals(hora))
-                .findFirst()
-                .orElse(null);
+    public void cancelarCita(String codigoCita) {
+        if (!citaDAO.existeCita(codigoCita)) {
+            System.out.println("La cita con el código ingresado no existe. No se puede cancelar.");
+            return;
+        }
+
+        boolean exito = citaDAO.eliminarCita(codigoCita);
+        if (exito) {
+            System.out.println("Cita cancelada con éxito.");
+        } else {
+            System.out.println("No se pudo cancelar la cita. Verifique el código proporcionado.");
+        }
+    }
+    
+    public boolean existeCita(String codigoCita) {
+        return citaDAO.existeCita(codigoCita);
+    }
+
+    public void actualizarCita(Cita cita) {
+        boolean exito = citaDAO.actualizarCita(cita);
+        if (exito) {
+            System.out.println("Cita actualizada correctamente.");
+        } else {
+            System.out.println("Error al actualizar la cita.");
+        }
     }
 
     public void listarCitas() {
-        System.out.println("\n--- Lista de Citas ---");
-        citas.forEach(cita -> System.out.println("Fecha: " + cita.getFecha() + " - Hora: " + cita.getHora() +
-                " - Paciente: " + cita.getPacienteAsignado().getNombre() +
-                " - Médico: " + cita.getMedicoAsignado().getNombre()));
+        List<Cita> citas = citaDAO.obtenerCitas();
+        if (citas.isEmpty()) {
+            System.out.println("No hay citas registradas.");
+        } else {
+            System.out.println("\n--- Lista de Citas ---");
+            for (Cita cita : citas) {
+                System.out.println("ID: " + cita.getCodigo() +
+                        " - Fecha: " + cita.getFecha() +
+                        " - Hora: " + cita.getHora() +
+                        " - Paciente: " + cita.getPacienteAsignado().getNombre() +
+                        " - Médico: " + cita.getMedicoAsignado().getNombre());
+            }
+        }
     }
     
-    public List<Cita> getCitas() {
-        return citas;
+    public boolean tieneDiagnostico(String codigoCita) {
+        Cita cita = citaDAO.buscarCitaPorCodigo(codigoCita);
+        return cita != null && cita.getDiagnostico() != null && !cita.getDiagnostico().isEmpty();
+    }    
+
+    public boolean registrarDiagnosticoYReceta(String codigoCita, String diagnostico, String codigoMedicamento, int cantidad, boolean actualizarDiagnostico) {
+        // Validar que la cita existe
+        Cita cita = citaDAO.buscarCitaPorCodigo(codigoCita);
+        if (cita == null) {
+            System.out.println("La cita con el código ingresado no existe.");
+            return false;
+        }
+
+        // Validar que el medicamento existe
+        if (!medicamentoService.existeMedicamento(codigoMedicamento)) {
+            System.out.println("El medicamento con el código ingresado no existe.");
+            return false;
+        }
+
+        // Validar que hay suficiente stock del medicamento
+        int stockDisponible = medicamentoService.obtenerStock(codigoMedicamento);
+        if (stockDisponible < cantidad) {
+            System.out.println("No hay suficiente stock del medicamento. Stock disponible: " + stockDisponible);
+            return false;
+        }
+
+        // Actualizar el stock del medicamento
+        boolean stockActualizado = medicamentoService.actualizarStock(codigoMedicamento, stockDisponible - cantidad);
+        if (!stockActualizado) {
+            System.out.println("Error al actualizar el stock del medicamento.");
+            return false;
+        }
+
+        // Registrar o actualizar el diagnóstico
+        if (actualizarDiagnostico || !tieneDiagnostico(codigoCita)) {
+            if (!citaDAO.actualizarDiagnostico(codigoCita, diagnostico)) {
+                System.out.println("Error al registrar el diagnóstico.");
+                return false;
+            }
+        }
+
+        // Registrar o actualizar la receta
+        if (!citaDAO.registrarOActualizarReceta(codigoCita, codigoMedicamento, cantidad)) {
+            System.out.println("Error al registrar la receta.");
+            return false;
+        }
+
+        System.out.println("Diagnóstico y receta registrados correctamente.");
+        return true;
     }
-   
-    public List<Medico> getMedicos() {
-        return medicos;
-    }
+
 }

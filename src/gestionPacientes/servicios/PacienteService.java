@@ -1,58 +1,62 @@
 package gestionPacientes.servicios;
 
-import gestionCitas.modelos.Cita;
+import gestionPacientes.dao.PacienteDAO;
 import gestionPacientes.modelos.Paciente;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.List;
 
 public class PacienteService {
-    private Set<Paciente> pacientes;
-    private static PacienteService instancia;
-   
-    private PacienteService() {
-        this.pacientes = new HashSet<>();
+    private PacienteDAO pacienteDAO;
+
+    public PacienteService() {
+        this.pacienteDAO = new PacienteDAO();
     }
 
-    public static PacienteService getInstance() {
-        if (instancia == null) {
-            instancia = new PacienteService();
-        }
-        return instancia;
-    }
-
+    // Agregar paciente
     public boolean agregarPaciente(Paciente paciente) {
-        boolean agregado = pacientes.add(paciente);
-        if (agregado) {
-            System.out.println("Paciente " + paciente.getNombre() + " agregado con ID " + paciente.getIdPaciente());
-        } else {
-            System.out.println("El paciente " + paciente.getNombre() + " ya está registrado.");
-        }
-        return agregado;
+        return pacienteDAO.insertarPaciente(paciente);
     }
 
-    public Paciente buscarPacientePorId(String idPaciente) {
-        return pacientes.stream()
-                .filter(p -> p.getIdPaciente().equalsIgnoreCase(idPaciente))
-                .findFirst()
-                .orElse(null);
+    // Actualizar paciente
+    public boolean actualizarPaciente(Paciente paciente) {
+        return pacienteDAO.actualizarPaciente(paciente);
     }
 
+    // Eliminar paciente
+    public boolean eliminarPaciente(String codigo) {
+        return pacienteDAO.eliminarPaciente(codigo);
+    }
+    
+    // Buscar paciente por código
+    public Paciente buscarPacientePorCodigo(String codigo) {
+        return pacienteDAO.buscarPacientePorCodigo(codigo);
+    }
+
+    public List<Paciente> buscarPacientesPorCriterio(String criterio) {
+        return pacienteDAO.buscarPacientesPorCriterio(criterio);
+    }
+
+    // Listar todos los pacientes
     public void listarPacientes() {
-        System.out.println("\n--- Lista de Pacientes ---");
-        pacientes.forEach(p -> System.out.println("ID: " + p.getIdPaciente() + " - Nombre: " + p.getNombre() + " - Edad: " + p.getEdad()));
-    }
-
-    public void agregarCitaAlHistorialDePaciente(String idPaciente, Cita cita) {
-        Paciente paciente = buscarPacientePorId(idPaciente);
-        if (paciente != null) {
-            paciente.getHistorialCitas().add(cita);
-            System.out.println("Cita agregada al historial del paciente " + paciente.getNombre());
+        List<Paciente> pacientes = pacienteDAO.obtenerPacientes();
+        if (pacientes.isEmpty()) {
+            System.out.println("No hay pacientes registrados.");
         } else {
-            System.out.println("Paciente con ID " + idPaciente + " no encontrado.");
+            System.out.println("\n--- Lista de Pacientes ---");
+            for (Paciente paciente : pacientes) {
+                System.out.println("Código: " + paciente.getCodigoPaciente() +
+                        " - Nombre: " + paciente.getNombre() +
+                        " - Edad: " + paciente.getEdad());
+            }
         }
     }
     
-    public Set<Paciente> getPacientes() {
-        return pacientes;
+    public List<String> obtenerHistorialMedico(String codigoPaciente) {
+        return pacienteDAO.obtenerHistorialMedico(codigoPaciente);
+    }
+
+    // Obtener lista de pacientes
+    public List<Paciente> obtenerPacientes() {
+        return pacienteDAO.obtenerPacientes();
     }
 }
